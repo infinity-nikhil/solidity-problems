@@ -12,14 +12,24 @@ struct FreelancerProfile {
     uint256 hourlyRateWei;
 }
 
+struct EmployerProfile {
+    uint id;
+    string name;
+    bool isHiring;
+    address wallet; 
+}
+
 contract DeWork{
     FreelancerProfile[] public freelancerProfiles;
+    EmployerProfile[] public employerProfiles;
 
     mapping(uint => address) public freelancerIdToAddress;
+    mapping (uint => address) public employerIdToAddress;
 
     event FreelancerProfileRegistered(uint256 freelancerId, address caller);
+    event EmployerRegistered(uint256 employerId, address caller);
 
-    function RegisterProfile(string memory _name, address _wallet, uint _exp, bool _IsAvialabe, uint _rate) public {
+    function RegisterProfile(string calldata _name, address _wallet, uint _exp, bool _IsAvialabe, uint _rate) external {
         freelancerProfiles.push(
             FreelancerProfile({
                 id: freelancerProfiles.length + 1,
@@ -37,5 +47,25 @@ contract DeWork{
     //This is how we return an array
     function getProfile() public view returns(FreelancerProfile[] memory) { //why memory here
         return freelancerProfiles;
+    }
+
+    function registerEmploye(string calldata _name, bool _isHiring) external {
+        //here we will see a new way of pushing the data in the array first we will create the object and 
+        // then we will push it in the array 
+        EmployerProfile memory employerProfile = EmployerProfile({
+            id: employerProfiles.length,
+            name: _name,
+            isHiring: _isHiring,
+            wallet: msg.sender
+        });
+
+        employerProfiles.push(employerProfile);
+        //now the mapping and emiting the event as we saw earlier .... 
+        employerIdToAddress[employerProfiles.length - 1] = msg.sender;
+        emit EmployerRegistered(employerProfiles.length - 1, msg.sender);
+    }
+
+    function getEmploy() public view returns(uint) {
+        return employerProfiles.length;
     }
 }
