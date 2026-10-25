@@ -15,6 +15,9 @@ struct FreelancerProfile {
 contract DeWork{
     FreelancerProfile[] public freelancerProfiles;
 
+    mapping(uint => address) public freelancerIdToAddress;
+
+    event FreelancerProfileRegistered(uint256 freelancerId, address caller);
 
     function RegisterProfile(string memory _name, address _wallet, uint _exp, bool _IsAvialabe, uint _rate) public {
         freelancerProfiles.push(
@@ -27,5 +30,12 @@ contract DeWork{
                 experienceYears: _exp
             })
         );
+        freelancerIdToAddress[freelancerProfiles.length - 1] = msg.sender; //explain why -1 here 
+        emit FreelancerProfileRegistered(freelancerProfiles.length - 1, msg.sender);
+    }
+
+    //This is how we return an array
+    function getProfile() public view returns(FreelancerProfile[] memory) { //why memory here
+        return freelancerProfiles;
     }
 }
