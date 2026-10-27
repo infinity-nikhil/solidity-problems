@@ -50,7 +50,33 @@ contract DeWork{
     event FreelancerProfileRegistered(uint256 freelancerId, address caller);
     event EmployerRegistered(uint256 employerId, address caller);
 
+    error Dework_UnauthourizedEmployer(uint256 employerId, address caller);
     error Dework_IncorrectJobCreationFee(uint expectedFee, uint actualFee);
+    error Dework_JobClosed(uint256 jobId);
+    error Dework_UnauthourizedFreelancer(uint256 freelancerId, address caller);
+    error Dework_InvalidJobId(uint256 employerId, uint256 jobId);
+
+    modifier onlyAuthourizedEmployer(uint256 employerId) {
+        address employer = employerIdToAddress[employerId];
+        if( employer != msg.sender || employer == address(0)) {
+            revert Dework_UnauthourizedEmployer(employerId, msg.sender);
+        }
+        _;
+    }
+
+    modifier validateFreelancerId(uint256 freelancerId) {
+        if(freelancerId >= freelancerProfiles.length || freelancerIdToAddress[freelancerId] == address(0)) {
+            revert Dework_UnauthourizedFreelancer(freelancerId, msg.sender);
+        }
+        _;
+    }
+
+    modifier validateJobId(uint256 employerId, uint256 jobId) {
+        if (jobId >= getNumberOfCreatedJobList(employerId)) {
+            revert Dework_InvalidJobId(employerId, jobId);
+        }
+        _;
+    }
 
     function RegisterProfile(string calldata _name, address _wallet, uint _exp, bool _IsAvialabe, uint _rate) external {
         freelancerProfiles.push(
@@ -127,5 +153,35 @@ contract DeWork{
 
         employerBalance[employerId] += jobListingInput.fixedPriceInWei;
         employerProfile.jobListing.push(newJob);
+    }
+
+    function _requireJobIsOpen(JobListing memory job) internal pure {
+        if(job.isOpen == false) {
+            revert Dework_JobClosed(job.id);
+        }
+    }
+
+    function _getJob(uint256 employerId, uint256 jobId) internal view returns (JobListing storage) {
+        return employerProfiles[employerId].jobListing[jobId];
+    }
+
+    function getJobList(uint256 employerId) external view returns (JobListing[] memory) {
+        return employerProfiles[employerId].jobListing;
+    }
+
+    // Here we valid some checks and we hire a freelance
+    function hireFreelancer(uint256 employerId, uint256 freelancerId, uint256 jobId) public 
+    onlyAuthourizedEmployer(employerId)
+    validateJobId(employerId, jobId)
+    validateFreelancerId(freelancerId) {
+
+        //Getting the job array via empolyer -> jobs -> that particular  jobId
+        JobListing storage job = _getJob(employerId, jobId);
+        _requireJobIsOpen(job);
+
+        //Making changes in state variable 
+        job.hiredFreelancerId = freelancerId;
+        job.hasHiredFreelancer = true;
+        job.isOpen = false;
     }
 }
