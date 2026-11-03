@@ -47,4 +47,9 @@ contract Class{
 
         return studentProfile;
     }
+
+    //But this method has it's own limitation...now suppose student feild has an id ....we can't pass the id as the input 
+    //it is decided by the system which id to give to whom....but if you are passing that struct as a function input then while 
+    //testing and in real frontend you will have to give all the feilds that is required by the struct or else it will through an err .... 
+    
 }
